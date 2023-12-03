@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "elsalvador-medicine-proj"
+version = "0.1.0"
+description = ""
+authors = ["Javier Gonzalez <javiergonzalez7@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+duckdb = "^0.9.2"
+client = {path = "/home/javier/datastream/datastreamplatform/src/libraries/client", develop = true}
+
+
+[tool.poetry.group.dev.dependencies]
+client = {path = "/home/javier/datastream/datastreamplatform/src/libraries/client", develop = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
