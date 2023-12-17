@@ -77,4 +77,4 @@ class MedicalProduct:
         self.range_price = precio_rango
         self.minimum_price_presentation = precio_presentacion_min
         self.maximum_price_presentation = precio_presentacion_max
-        self.rage_price = precios_rango
+        self.ranges_prices = precios_rango
