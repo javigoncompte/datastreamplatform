@@ -3,11 +3,11 @@ from bs4 import BeautifulSoup
 from rapidfuzz import fuzz, process
 
 
-class SanNicolas:
+class Onlife:
     def __init__(self):
-        self.base_url = "https://www.farmaciasannicolas.com"
-        self.name = "Farmacias San Nicolas"
-        self.id = "san_nicolas"
+        self.base_url = "https://www.{}.com"
+        self.name = "Onlife Farmacia"
+        self.id = "onlife"
 
     def get_product(self, url_link):
         url = f"{self.base_url}{url_link}"
