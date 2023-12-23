@@ -21,7 +21,8 @@ class DanmClient:
             product_list = data["data"]
 
         medical_product_list = [
-            MedicalProductFactory.create_product(**product) for product in product_list
+            MedicalProductFactory.create_product(**product)
+            for product in product_list
         ]
         return medical_product_list
 
@@ -43,6 +44,7 @@ class DanmClient:
                 current_page = data["current_page"] + 1
                 last_page = data["last_page"]
         medical_product_list = [
-            MedicalProductFactory.create_product(**product) for product in all_products
+            MedicalProductFactory.create_product(**product)
+            for product in all_products
         ]
         return medical_product_list

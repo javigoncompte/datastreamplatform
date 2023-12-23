@@ -9,25 +9,75 @@ class SanNicolas:
         self.name = "Farmacias San Nicolas"
         self.id = "san_nicolas"
 
-    def get_product(self, name, url_link):
+    def get_product(self, url_link):
         url = f"{self.base_url}{url_link}"
         with requests.Session() as s:
             response = s.get(url)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
-            product_name = soup.find("h1", class_="product_title").get_text(strip=True)
-            if product_name:
+            product_name = soup.find("h1", class_="nombre mt-md-4").get_text(
+                strip=True
+            )
+            div = soup.find("div", {"class": "desc text-muted"})
+            table = div.find("table")
+            rows = table.find_all("tr")
+            active_ingredient = [
+                [td.get_text(strip=True) for td in tr.find_all("td")]
+                for tr in rows[1:]
+            ][0]
+            active_ingredient = tuple(active_ingredient)
+            active_ingredient = dict([active_ingredient])
+            if product_name and active_ingredient:
                 name = product_name
             else:
                 name = None
-        return name
+                active_ingredient = None
+        return name, active_ingredient
 
-    def get_discounts(self):
-        return None
+    def get_discounts(orginal_price, discount_price, vip_price, bank_price):
+        original_price = float(original_price)
+        discount_price = float(discount_price)
+        vip_price = float(vip_price)
+        bank_price = float(bank_price)
 
-    def get_prices(self):
+        discount_percentage = (
+            (original_price - discount_price) / original_price
+        ) * 100
+        vip_discount_percentage = (
+            (original_price - vip_price) / original_price
+        ) * 100
+        bank_discount_percentage = (
+            (original_price - bank_price) / original_price
+        ) * 100
 
-        return None
+        return {
+            "discount_percentage": round(discount_percentage, 2),
+            "vip_discount_percentage": round(vip_discount_percentage, 2),
+            "bank_discount_percentage": round(bank_discount_percentage, 2),
+        }
+
+    def get_prices(self, url_link):
+        url = f"{self.base_url}{url_link}"
+        with requests.Session() as s:
+            response = s.get(url)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            prices = soup.find("div", class_="precios-detalle")
+            default_prices = prices.find("div", class_="precio p-default")
+            original_price = default_prices.find("span").get_text(strip=True)
+            discount_price = default_prices.find("strong").get_text(strip=True)
+            vip_price = (
+                prices.find("div", class_="precio p-vip")
+                .find("strong", class_="right")
+                .get_text(strip=True)
+            )
+            bank_price = (
+                prices.find("div", class_="precio p-ba")
+                .find("strong", class_="right")
+                .get_text(strip=True)
+            )
+
+        return original_price, discount_price, vip_price, bank_price
 
     def fuzzy_match(self, commercial_name):
         generic_name = commercial_name.split()[0]
@@ -39,7 +89,6 @@ class SanNicolas:
             soup = BeautifulSoup(response.text, "html.parser")
             products = soup.find_all("div", class_="box-producto")
             links = [product.find("a").get("href") for product in products]
-            print(links)
             product_names = [
                 product.find("h3").get_text(strip=True) for product in products
             ]
@@ -62,7 +111,10 @@ def execute():
     pharmacy_name, link = sn.fuzzy_match(
         "Ozempic FixDose Solución Inyectable en Pluma Precargada 1.34 mg/ml"
     )
-    sn.get_product(pharmacy_name, link)
+    product = sn.get_product(link)
+    prices = sn.get_prices(link)
+    print(prices)
+    return product
 
 
 execute()

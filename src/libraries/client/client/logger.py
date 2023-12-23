@@ -29,17 +29,22 @@ def log(_func=None, *, my_logger: Union[MyLogger, logging.Logger] = None):
                     logger_params = [  # does kwargs have any logger
                         x
                         for x in kwargs.values()
-                        if isinstance(x, logging.Logger) or isinstance(x, MyLogger)
+                        if isinstance(x, logging.Logger)
+                        or isinstance(x, MyLogger)
                     ] + [  # # does args have any logger
                         x
                         for x in args
-                        if isinstance(x, logging.Logger) or isinstance(x, MyLogger)
+                        if isinstance(x, logging.Logger)
+                        or isinstance(x, MyLogger)
                     ]
-                    if hasattr(first_args, "__dict__"):  # is first argument `self`
+                    if hasattr(
+                        first_args, "__dict__"
+                    ):  # is first argument `self`
                         logger_params = logger_params + [
                             x
                             for x in first_args.__dict__.values()  # does class (dict) members have any logger
-                            if isinstance(x, logging.Logger) or isinstance(x, MyLogger)
+                            if isinstance(x, logging.Logger)
+                            or isinstance(x, MyLogger)
                         ]
                     h_logger = next(
                         iter(logger_params), MyLogger()
@@ -55,7 +60,9 @@ def log(_func=None, *, my_logger: Union[MyLogger, logging.Logger] = None):
                 args_repr = [repr(a) for a in args]
                 kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
                 signature = ", ".join(args_repr + kwargs_repr)
-                logger.debug(f"function {func.__name__} called with args {signature}")
+                logger.debug(
+                    f"function {func.__name__} called with args {signature}"
+                )
             except Exception:
                 pass
 
