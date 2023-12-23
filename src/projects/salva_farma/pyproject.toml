@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "salva-farma"
+version = "0.1.0"
+description = ""
+authors = ["Javigoncompte <javiergonzalez7@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+reflex = "^0.3.7"
+polars = "^0.20.2"
+
+[tool.poetry.group.dev.dependencies]
+polars = "^0.20.2"
+reflex = "^0.3.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
