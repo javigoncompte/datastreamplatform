@@ -2,7 +2,7 @@ from typing import Protocol
 
 
 class Pharmacy(Protocol):
-    def get_product(self, url_link: str):
+    def get_product(self, data):
         pass
 
     def _get_discounts(
@@ -14,7 +14,7 @@ class Pharmacy(Protocol):
     ):
         pass
 
-    def get_prices(self, url_link: str):
+    def get_prices(self, data):
         pass
 
     def fuzzy_match(self, commercial_name: str):

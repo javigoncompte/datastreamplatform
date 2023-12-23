@@ -1,3 +1,6 @@
+import re
+from functools import cached_property
+
 import requests
 from bs4 import BeautifulSoup
 from rapidfuzz import fuzz, process
@@ -5,105 +8,78 @@ from rapidfuzz import fuzz, process
 
 class Onlife:
     def __init__(self):
-        self.base_url = "https://www.{}.com"
+        self.base_url = "https://www.onlifeapp.com/sv"
         self.name = "Onlife Farmacia"
         self.id = "onlife"
 
-    def get_product(self, url_link):
-        url = f"{self.base_url}{url_link}"
+    @cached_property
+    def build_id(self):
         with requests.Session() as s:
-            response = s.get(url)
+            response = s.get(self.base_url)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
-            product_name = soup.find("h1", class_="nombre mt-md-4").get_text(
-                strip=True
+            build_id = (
+                soup.find_all(
+                    "script",
+                    {"src": re.compile(r"/_next/static/(?!.*chunks)")},
+                )[0]
+                .get("src")
+                .split("/")[3]
             )
-            div = soup.find("div", {"class": "desc text-muted"})
-            table = div.find("table")
-            rows = table.find_all("tr")
-            active_ingredient = [
-                [td.get_text(strip=True) for td in tr.find_all("td")]
-                for tr in rows[1:]
-            ][0]
-            active_ingredient = tuple(active_ingredient)
-            active_ingredient = dict([active_ingredient])
-            if product_name and active_ingredient:
-                name = product_name
-            else:
-                name = None
-                active_ingredient = None
-        return name, active_ingredient
+            return build_id
+
+    def get_product(self, data):
+        onlife_id = data.get("id")
+        name = data.get("name")
+        is_low_stock = data.get("is_low_stock")
+        description = data.get("description")
+        restricted_drug = data.get("restricted_drug")
+        controlled_drug = data.get("controlled_drug")
+
+        return {
+            "onlife_id": onlife_id,
+            "name": name,
+            "is_low_stock": is_low_stock,
+            "description": description,
+            "restricted_drug": restricted_drug,
+            "controlled_drug": controlled_drug,
+        }
 
     def _get_discounts(
-        self, original_price, discount_price, vip_price, bank_price
+        self,
+        original_price,
+        current_price,
     ):
-        original_price = float(original_price)
-        discount_price = float(discount_price)
-        vip_price = float(vip_price)
-        bank_price = float(bank_price)
+        current_price = float(current_price)
+        price = float(price)
 
-        discount_percentage = (
-            (original_price - discount_price) / original_price
-        ) * 100
-        vip_discount_percentage = (
-            (original_price - vip_price) / original_price
-        ) * 100
-        bank_discount_percentage = (
-            (original_price - bank_price) / original_price
-        ) * 100
+        discount_percentage = ((original_price - price) / original_price) * 100
 
         return {
             "discount_percentage": round(discount_percentage, 2),
-            "vip_discount_percentage": round(vip_discount_percentage, 2),
-            "bank_discount_percentage": round(bank_discount_percentage, 2),
         }
 
-    def get_prices_and_discounts(self, url_link):
-        url = f"{self.base_url}{url_link}"
-        with requests.Session() as s:
-            response = s.get(url)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, "html.parser")
-            prices = soup.find("div", class_="precios-detalle")
-            default_prices = prices.find("div", class_="precio p-default")
-            original_price = default_prices.find("span").get_text(strip=True)
-            discount_price = default_prices.find("strong").get_text(strip=True)
-            vip_price = (
-                prices.find("div", class_="precio p-vip")
-                .find("strong", class_="right")
-                .get_text(strip=True)
-            )
-            bank_price = (
-                prices.find("div", class_="precio p-ba")
-                .find("strong", class_="right")
-                .get_text(strip=True)
-            )
-            discounts = self._get_discounts(
-                original_price, discount_price, vip_price, bank_price
-            )
-        return original_price, discount_price, vip_price, bank_price
+    def get_prices_and_discounts(self, data):
+        original_price = data.get("pricing").get("originalPrice")
+        current_price = data.get("pricing").get("currentPrice")
+        return {
+            "original_price": original_price,
+            "current_price": current_price,
+        }
 
     def fuzzy_match(self, commercial_name):
         generic_name = commercial_name.split()[0]
-        url = f"{self.base_url}/Producto?Nombre={generic_name}"
-        print(url)
+        url = f"{self.base_url}/api/products/fuzzy-search?term={generic_name}"
         with requests.Session() as s:
             response = s.get(url)
             response.raise_for_status()
-            soup = BeautifulSoup(response.text, "html.parser")
-            products = soup.find_all("div", class_="box-producto")
-            links = [product.find("a").get("href") for product in products]
-            product_names = [
-                product.find("h3").get_text(strip=True) for product in products
-            ]
-            if product_names:
-                fuzzy_match = process.extract(
-                    commercial_name, product_names, scorer=fuzz.WRatio, limit=3
+            data = response.json()
+            matches = data["data"]
+            fuzzy_match_link = []
+            for match in matches:
+                match["score"] = fuzz.ratio(
+                    match["name"].lower(), commercial_name.lower()
                 )
-                pharmacy_name = fuzzy_match[0][0]
-            else:
-                fuzzy_match = None
-        fuzzy_match_link = process.extract(
-            pharmacy_name, links, scorer=fuzz.WRatio, limit=3
-        )[0][0]
-        return pharmacy_name, fuzzy_match_link
+            highest_score_data = max(matches, key=lambda x: x["score"])
+
+        return highest_score_data

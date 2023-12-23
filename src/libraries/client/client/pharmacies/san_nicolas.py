@@ -58,8 +58,8 @@ class SanNicolas:
             "bank_discount_percentage": round(bank_discount_percentage, 2),
         }
 
-    def get_prices_and_discounts(self, url_link):
-        url = f"{self.base_url}{url_link}"
+    def get_prices_and_discounts(self, data):
+        url = f"{self.base_url}{data}"
         with requests.Session() as s:
             response = s.get(url)
             response.raise_for_status()
