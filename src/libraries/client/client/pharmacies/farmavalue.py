@@ -1,9 +1,5 @@
-import re
-from functools import cached_property
-
 import requests
-from bs4 import BeautifulSoup
-from rapidfuzz import fuzz, process
+from rapidfuzz import fuzz
 
 
 class FarmaValue:
