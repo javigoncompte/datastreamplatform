@@ -13,22 +13,22 @@ class FarmaValue:
         self.id = "farmavalue"
         self.price_url = "https://fe-app.3c.group/api/v1/producto/precio"
         self.municipal_id = "0104"
+        self.token = "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxNDE4NzV9.X-geV2byFIklNpRFRFjxlzNEt2_eq04zYMs7rHbEn5g"
 
     def get_product(self, data):
         onlife_id = data.get("id")
         name = data.get("nombre")
         is_low_stock = data.get("agotado")
         description = data.get("principios_activos")
-        restricted_drug = data.get("restricted_drug")
         controlled_drug = data.get("controlado")
         laboratory = data.get("laboratorio")
 
         return {
-            "onlife_id": onlife_id,
+            "farmavalue_id": onlife_id,
             "name": name,
             "is_low_stock": is_low_stock,
             "description": description,
-            "restricted_drug": restricted_drug,
+            "laboratory": laboratory,
             "controlled_drug": controlled_drug,
         }
 
@@ -37,21 +37,31 @@ class FarmaValue:
         original_price,
         current_price,
     ):
-        current_price = float(current_price)
-        price = float(price)
-
-        discount_percentage = ((original_price - price) / original_price) * 100
-
-        return {
-            "discount_percentage": round(discount_percentage, 2),
-        }
+        discount = round((1 - (current_price / original_price)) * 100, 2)
+        return discount
 
     def get_prices_and_discounts(self, data):
+        url = self.price_url
+        headers = {"Authorization": f"Bearer {self.token}"}
+        payload = {"municipio": self.municipal_id, "producto": data.get("id")}
+        with requests.Session() as s:
+            response = s.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
         current_price = data.get("precio")
+        discount_normal = data.get("dcto")
+        discount_special_card = data.get("dcto_tarjeta")
+        discount_third_card = data.get("dcto_tercera_tarjeta")
         current_price = data.get("pricing").get("currentPrice")
+        discount_price = current_price - discount_normal
+        discount_special_card_price = current_price - discount_special_card
+        discount_third_card_price = current_price - discount_third_card
+
         return {
-            "original_price": original_price,
             "current_price": current_price,
+            "discount_price": discount_price,
+            "discount_special_card_price": discount_special_card_price,
+            "discount_third_card_price": discount_third_card_price,
         }
 
     def fuzzy_match(self, commercial_name):
