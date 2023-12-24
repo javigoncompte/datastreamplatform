@@ -15,15 +15,12 @@ class SanNicolas:
             response = s.get(url)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
-            product_name = soup.find("h1", class_="nombre mt-md-4").get_text(
-                strip=True
-            )
+            product_name = soup.find("h1", class_="nombre mt-md-4").get_text(strip=True)
             div = soup.find("div", {"class": "desc text-muted"})
             table = div.find("table")
             rows = table.find_all("tr")
             active_ingredient = [
-                [td.get_text(strip=True) for td in tr.find_all("td")]
-                for tr in rows[1:]
+                [td.get_text(strip=True) for td in tr.find_all("td")] for tr in rows[1:]
             ][0]
             active_ingredient = tuple(active_ingredient)
             active_ingredient = dict([active_ingredient])
@@ -34,20 +31,14 @@ class SanNicolas:
                 active_ingredient = None
         return name, active_ingredient
 
-    def _get_discounts(
-        self, original_price, discount_price, vip_price, bank_price
-    ):
+    def _get_discounts(self, original_price, discount_price, vip_price, bank_price):
         original_price = float(original_price)
         discount_price = float(discount_price)
         vip_price = float(vip_price)
         bank_price = float(bank_price)
 
-        discount_percentage = (
-            (original_price - discount_price) / original_price
-        ) * 100
-        vip_discount_percentage = (
-            (original_price - vip_price) / original_price
-        ) * 100
+        discount_percentage = ((original_price - discount_price) / original_price) * 100
+        vip_discount_percentage = ((original_price - vip_price) / original_price) * 100
         bank_discount_percentage = (
             (original_price - bank_price) / original_price
         ) * 100
@@ -86,7 +77,6 @@ class SanNicolas:
     def fuzzy_match(self, commercial_name):
         generic_name = commercial_name.split()[0]
         url = f"{self.base_url}/Producto?Nombre={generic_name}"
-        print(url)
         with requests.Session() as s:
             response = s.get(url)
             response.raise_for_status()

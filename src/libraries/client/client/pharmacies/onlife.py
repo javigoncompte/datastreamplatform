@@ -75,7 +75,6 @@ class Onlife:
             response.raise_for_status()
             data = response.json()
             matches = data["data"]
-            fuzzy_match_link = []
             for match in matches:
                 match["score"] = fuzz.ratio(
                     match["name"].lower(), commercial_name.lower()
